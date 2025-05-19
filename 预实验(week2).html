@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>再说</title>
+    <script src="https://unpkg.com/jspsych@latest"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@latest"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-image-keyboard-response@latest"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-preload@latest"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-iat-html@latest"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-button-response@latest"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-survey-html-form@latest"></script>
+    <link href="https://unpkg.com/jspsych@latest/css/jspsych.css"rel ="stylesheet" type="text/css" />
+    <script src="./公正世界信念.js"></script><!-- 引入自定义的刺激文件（stimulus.js） -->
+</head>
+<body>
+    
+</body>
+
+<script>
+   var jsPsych = initJsPsych({
+      on_finish: function() {
+        var demographics_data = jsPsych.data.get().filter({task: 'demographics'}).values(); // 获取 demographics 数据
+        var sub = demographics_data.find(d => d.varname === 'sub').response; // 获取编号的值
+        var gender_value = demographics_data.find(d => d.varname === 'gender').response; // 获取性别的值
+        var age = demographics_data.find(d => d.varname === 'age').response.Q0; // 获取年龄
+        jsPsych.data.addProperties({sub: sub, gender: gender_value, age: age}); // 添加性别和年龄属性到数据中
+        jsPsych.data.displayData(); // 打印数据到控制台
+        jsPsych.data.get().localSave('csv', 'data.csv'); // 保存数据到 csv 文件
+      }
+    });
+
+
+
+    var Sub = {
+    type: jsPsychSurveyHtmlForm, // 使用正确的插件类型
+    preamble: '请输入你的编号', // 这是提示信息，用于在表单前显示说明
+    post_trial_gap: 500,
+    html: `
+        <p> <input name="Q0" type="number" required
+        style="width:100px; height:30px;"/> </p>`, // required属性表示必填项
+    button_label: '继续', // 设置按钮标签
+    data: {task: 'demographics', varname: 'sub'}, // 设置数据信息
+    };
+
+
+    var Gender = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: '请选择性别<br/><br/>',
+      choices: ['男', '女'],
+      post_trial_gap:500,
+      data: {task:'demographics',varname:'gender'},
+      on_finish:function(data){
+        if(data.button_pressed== 0){//判断选择的是男还是女,两个=是为了判断的意思
+          data.gender='male';
+        }else{
+          data.gender='female';
+        }
+      }
+    };
+    var Age = {
+      type: jsPsychSurveyHtmlForm,
+      preamble: '请输入你的年龄',//提示背景似的预填
+      post_trial_gap:500,
+      html:`
+      <p> <input name="Q0" type="number" placeholder="18~60" min=18 max="60" 
+        oninput="if(value.length>2)value=value.slice(0,2);" required
+        style="width:100px; height:30px;"/> </p>`,//required属性表示必填项
+        button_label:'继续',
+        data: {task:'demographics',varname:'age'},
+        };
+
+    var welcome = {
+        type:jsPsychHtmlButtonResponse,
+        stimulus:`<p>欢迎您参加实验!</p>
+        <p>此实验目的在于考察您对不同类型词语的分类情况，你需要在保证正确的基础上尽快对呈现的词进行归类。</p>
+        <p>实验分七部分，每部分的目标词不一样,请<b>注意观看每个部分的指导语</b>。</p>
+         <p>如果您已经明白规则，请按下键开始实验。</p>`,
+        choices: ['继续'],};
+
+    
+    const instructions_block1 = {
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: `<p>接下来将进行第一部分的测试。</p>
+           <p>请将你的左手和右手食指分别挡在键盘的F和J键上。</p>
+            <p>一会屏幕会呈现一个词语，请在保证正确率的前提下对其<b style="color:red">尽快</b>进行分类。</p>
+            <p>分类规则为：有关<b>"自我"</b>的词请按F键，有关<b>"非我"</b>的词请按J键。</p>
+            <p>如果你已经明白规则，请按空格键开始测试。</p>`,
+        choices: [' '],
+        record_data: false,
+    };
+
+   var block1_trial = {
+      type: jsPsychIatHtml,
+      stimulus:jsPsych.timelineVariable('stims'),
+      stim_key_association:jsPsych.timelineVariable('key_association'),
+      html_when_wrong: '<span style="color:red;font-size:60px">X</span>',
+      bottom_instructions: '<p>如果您按错了键，将出现一个红色的X。请按正确的键继续</p>',
+      force_correct_key_press: true,
+      display_feedback: true,
+      trial_duration: 3000,
+      left_category_key: 'f',
+      right_category_key: 'j',
+      left_category_label: ['自我词'],
+      right_category_label: ['非我词'],
+      response_ends_trial: true,
+      post_trial_gap: 500,
+   };
+
+    var block1={
+        timeline:[block1_trial],
+        timeline_variables: block1_stims,
+        randomize_order:true,
+        repetitions:1,
+        data:{
+            task:"IAT_公正世界信念",
+            block:1},
+    };
+
+    const instructions_block2 = {
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: `<p>接下来将进行第二部分的测试。</p>
+           <p>请将你的左手和右手食指分别挡在键盘的F和J键上。</p>
+           <p>一会屏幕会呈现一个词语，请在保证正确率的前提下对其<b style="color:red">尽快</b>进行分类。</p>
+            <p>分类规则为：有关<b>"公正"</b>的词(如“公平”，“公正”等)请按F键，有关<b>"不公正"</b>的词(如“冤枉”，“袒护”等)请按J键。</p>
+            <p>如果你已经明白规则，请按空格键开始测试。</p>`,
+        choices: [' '],
+        record_data: false,
+    };
+
+    var block2_trial = {
+      type: jsPsychIatHtml,
+      stimulus:jsPsych.timelineVariable('stims'),
+      stim_key_association:jsPsych.timelineVariable('key_association'),
+      html_when_wrong: '<span style="color:red;font-size:60px">X</span>',
+      bottom_instructions: '<p>如果您按错了键，将出现一个红色的X。请按正确的键继续</p>',
+      force_correct_key_press: true,
+      display_feedback: true,
+      trial_duration: 3000,
+      left_category_key: 'f',
+      right_category_key: 'j',
+      left_category_label: ['公正词'],
+      right_category_label: ['不公正词'],
+      response_ends_trial: true,
+      post_trial_gap: 500,
+   };
+
+    var block2={
+        timeline:[block2_trial],
+        timeline_variables: block2_stims,
+        randomize_order:true,
+        repetitions:1,
+        data:{
+            task:"IAT_公正世界信念",
+            block:2},
+    };
+
+
+
+    const instructions_block3 = {
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: `<p>接下来将进行第三部分的测试。</p>
+           <p>请将你的左手和右手食指分别挡在键盘的F和J键上。</p>
+           <p>一会屏幕会呈现一个词语，请在保证正确率的前提下对其<b style="color:red">尽快</b>进行分类。</p>
+            <p>分类规则为：有关<b>"自我或公正"</b>的词请按F键，有关<b>"非我或不公正"</b>的词请按J键。</p>
+            <p>如果你已经明白规则，请按空格键开始测试。</p>`,
+        choices: [' '],
+        record_data: false,
+    };
+
+
+    var block3_trial = {
+      type: jsPsychIatHtml,
+      stimulus:jsPsych.timelineVariable('stims'),
+      stim_key_association:jsPsych.timelineVariable('key_association'),
+      html_when_wrong: '<span style="color:red;font-size:60px">X</span>',
+      bottom_instructions: '<p>如果您按错了键，将出现一个红色的X。请按正确的键继续</p>',
+      force_correct_key_press: true,
+      display_feedback: true,
+      trial_duration: 3000,
+      left_category_key: 'f',
+      right_category_key: 'j',
+      left_category_label: ['自我词','公正词'],
+      right_category_label: ['非我词','不公正词'],
+      response_ends_trial: true,
+      post_trial_gap: 500,
+   };
+
+    var block3={
+        timeline:[block3_trial],
+        timeline_variables: block34_stims,
+        randomize_order:true,
+        repetitions:1,
+        data:{
+            task:"IAT_公正世界信念",
+            block:3},
+    };
+
+
+    const instructions_block4 = {
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: `<p>接下来将进行第四部分的测试。</p>
+           <p>请将你的左手和右手食指分别挡在键盘的F和J键上。</p>
+           <p>一会屏幕会呈现一个词语，请在保证正确率的前提下对其<b style="color:red">尽快</b>进行分类。</p>
+            <p>分类规则为：有关<b>"自我或公正"</b>的词请按F键，有关<b>"非我或不公正"</b>的词请按J键。</p>
+            <p><b style="color:red">请注意</b>：在此部分，对错将不再进行提示，您只需尽快做出您的判断</p>
+            <p>如果你已经明白规则，请按空格键开始测试。</p>`,
+        choices: [' '],
+        record_data: false,
+    };
+
+
+    var block4_trial = {
+    type: jsPsychIatHtml,
+    stimulus: jsPsych.timelineVariable('stims'),
+    stim_key_association: jsPsych.timelineVariable('key_association'),
+    html_when_wrong: '', // 不显示错误提示
+    bottom_instructions: '',
+    force_correct_key_press: false, // 允许错误的按键
+    display_feedback: false, // 禁用反馈显示
+    trial_duration: 3000,
+    left_category_key: 'f',
+    right_category_key: 'j',
+    left_category_label: ['自我词', '公正词'],
+    right_category_label: ['非我词', '不公正词'],
+    response_ends_trial: true, // 按键后直接结束试验
+    post_trial_gap: 500,
+    on_finish: function(data) {
+        // 检查响应是否正确，并记录到数据中
+        var correct_key = jsPsych.timelineVariable('key_association');
+        var response_key = data.response;
+        data.correct_response = response_key === correct_key;
+        if (!data.correct_response) {
+            console.log('用户按错了键');
+        }
+    }};
+
+    var block4={
+        timeline:[block4_trial],
+        timeline_variables: block34_stims,
+        randomize_order:true,
+        repetitions:1,
+        data:{
+            task:"IAT_公正世界信念",
+            block:4},
+    };
+
+
+
+    const instructions_block5 = {
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: `<p>接下来将进行第五部分的测试。</p>
+           <p>请将你的左手和右手食指分别挡在键盘的F和J键上。</p>
+           <p>一会屏幕会呈现一个词语，请在保证正确率的前提下对其<b style="color:red">尽快</b>进行分类。</p>
+            <p>分类规则为：有关<b>"非我"</b>的词请按F键，有关<b>"自我"</b>的词请按J键。</p>
+            <p>如果你已经明白规则，请按空格键开始测试。</p>`,
+        choices: [' '],
+        record_data: false,
+    };
+
+
+    var block5_trial = {
+      type: jsPsychIatHtml,
+      stimulus:jsPsych.timelineVariable('stims'),
+      stim_key_association:jsPsych.timelineVariable('key_association'),
+      html_when_wrong: '<span style="color:red;font-size:60px">X</span>',
+      bottom_instructions: '<p>如果您按错了键，将出现一个红色的X。请按正确的键继续</p>',
+      force_correct_key_press: true,
+      display_feedback: true,
+      trial_duration: 3000,
+      left_category_key: 'f',
+      right_category_key: 'j',
+      left_category_label: ['非我词'],
+      right_category_label: ['自我词'],
+      response_ends_trial: true,
+      post_trial_gap: 500,
+   };
+
+    var block5={
+        timeline:[block5_trial],
+        timeline_variables: block5_stims,
+        randomize_order:true,
+        repetitions:1,
+        data:{
+            task:"IAT_公正世界信念",
+            block:5},
+    };
+
+
+    const instructions_block6 = {
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: `<p>接下来将进行第六部分的测试。</p>
+           <p>请将你的左手和右手食指分别挡在键盘的F和J键上。</p>
+           <p>一会屏幕会呈现一个词语，请在保证正确率的前提下对其<b style="color:red">尽快</b>进行分类。</p>
+            <p>分类规则为：有关<b>"非我或公正"</b>的词请按F键，有关<b>"自我或不公正"</b>的词请按J键。</p>
+            <p>如果你已经明白规则，请按空格键开始测试。</p>`,
+        choices: [' '],
+        record_data: false,
+    };
+
+
+    var block6_trial = {
+      type: jsPsychIatHtml,
+      stimulus:jsPsych.timelineVariable('stims'),
+      stim_key_association:jsPsych.timelineVariable('key_association'),
+      html_when_wrong: '<span style="color:red;font-size:60px">X</span>',
+      bottom_instructions: '<p>如果您按错了键，将出现一个红色的X。请按正确的键继续</p>',
+      force_correct_key_press: true,
+      display_feedback: true,
+      trial_duration: 3000,
+      left_category_key: 'f',
+      right_category_key: 'j',
+      left_category_label: ['非我词','公正词'],
+      right_category_label: ['自我词','不公正词'],
+      response_ends_trial: true,
+      post_trial_gap: 500,
+   };
+
+    var block6={
+        timeline:[block6_trial],
+        timeline_variables: block67_stims,
+        randomize_order:true,
+        repetitions:1,
+        data:{
+            task:"IAT_公正世界信念",
+            block:6},
+    };
+
+
+    const instructions_block7 = {
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: `<p>接下来将进行第七部分的测试。</p>
+           <p>请将你的左手和右手食指分别挡在键盘的F和J键上。</p>
+           <p>一会屏幕会呈现一个词语，请在保证正确率的前提下对其<b style="color:red">尽快</b>进行分类。</p>
+            <p>分类规则为：有关<b>"非我或公正"</b>的词请按F键，有关<b>"自我或不公正"</b>的词请按J键。</p>
+            <p><b style="color:red">请注意</b>：在此部分，对错将不再进行提示，您只需尽快做出您的判断</p>
+            <p>如果你已经明白规则，请按空格键开始测试。</p>`,
+        choices: [' '],
+        record_data: false,
+    };
+
+
+    var block7_trial = {
+    type: jsPsychIatHtml,
+    stimulus: jsPsych.timelineVariable('stims'),
+    stim_key_association: jsPsych.timelineVariable('key_association'),
+    html_when_wrong: '', // 不显示错误提示
+    bottom_instructions: '',
+    force_correct_key_press: false, // 允许错误的按键
+    display_feedback: false, // 禁用反馈显示
+    trial_duration: 3000,
+    left_category_key: 'f',
+    right_category_key: 'j',
+    left_category_label: ['非我词', '公正词'],
+    right_category_label: ['自我词', '不公正词'],
+    response_ends_trial: true, // 按键后直接结束试验
+    post_trial_gap: 500,
+    on_finish: function(data) {
+        // 检查响应是否正确，并记录到数据中
+        var correct_key = jsPsych.timelineVariable('key_association');
+        var response_key = data.response;
+        data.correct_response = response_key === correct_key;
+        if (!data.correct_response) {
+            console.log('用户按错了键');
+        }
+    }
+};
+
+
+
+    var block7={
+        timeline:[block7_trial],
+        timeline_variables: block67_stims,
+        randomize_order:true,
+        repetitions:1,
+        data:{
+            task:"IAT_公正世界信念",
+            block:7},
+    };
+
+
+    var welcome2 = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: `<p>感谢您参与本次实验！</p>
+    <p>在实验过程中，您展现出了良好的表现与配合度。</p>
+    <p>我们非常感谢您为这项研究付出的时间和精力，为此，您将一共获得<b style="color:red"> 50 代币</b>作为您的报酬。</p>
+    <p>这些代币可以<b style="color:red">转换为真钱</b>，成为您的实验费用。</p>
+    <p>此外，我们的实验室与一个致力于公益事业的慈善组织合作。</p>
+    <p>您通过本次实验获得的代币可以捐赠给一个慈善项目。</p>
+    <p>您能够<b>自行决定</b>代币的处置方式，既可以选择将全部代币转化为真实货币纳入被试费，也可以考虑捐赠部分代币以助力慈善项目，同时留存剩余部分转化成真钱。</p>
+    <p>请阅读并理解后按下键继续。</p>`,
+    choices: ['继续 (<span id="countdown1"></span>)'],
+    on_start: function() {
+        this.startTime = Date.now();
+    },
+    on_load: function() {
+        let countdown = 15; 
+        let button = document.querySelector("button");
+        button.disabled = true; // 初始时禁用按钮
+        document.getElementById("countdown1").textContent = countdown; 
+
+        const interval = setInterval(() => {
+            countdown -= 1;
+            if (countdown >= 0) {
+                document.getElementById("countdown1").textContent = countdown;
+            }
+            if (countdown === 0) {
+                clearInterval(interval);
+                button.disabled = false; // 倒计时结束后启用按钮
+            }
+        }, 1000);
+    },};
+
+
+
+   var redonation = {
+  type: jsPsychSurveyHtmlForm,
+  preamble: `<h2>监狱教育改革项目｜给迷失的人一次重新选择的机会</h2>
+    <p>他们曾经犯下过错，但也仍然拥有被改变的可能。</p>
+    <p>在高墙之内，有人正在悔悟，有人渴望成长，有人期待重生。</p>
+    <p><b style="font-size: 18px">“监狱教育改革项目”</b>，是为那些正在服刑的人员提供教育机会与人文关怀的公益计划。</p>
+    <p>我们相信，教育不仅能惩戒过往，更能引导未来。</p>
+    <p>让服刑人员在服刑期间接受法律、文化、技能等方面的学习，</p>
+    <p>使他们在出狱后能更好地融入社会，重启人生。</p>`,
+  post_trial_gap: 500,
+  html: `
+    <form id="donation-form">
+      <p>
+        <input name="Q0" type="number" placeholder="0~50" min=0 max="50"
+               oninput="if(value.length>2)value=value.slice(0,2);" required
+               style="width:100px; height:30px;" />
+      </p>
+      <p id="countdown2">请仔细阅读材料，15秒后进行捐赠(按键输入)...</p>
+      <button type="submit" id="donate-button" 
+              style="display:none; border:none; background-color:#f1f1f1; padding:10px 20px; font-size:16px; cursor:pointer; border-radius:4px;">
+        捐赠
+      </button>
+    </form> `,
+  button_label: null,
+  on_load: function() {
+    var countdownElement = document.getElementById("countdown2");
+    var buttonElement = document.getElementById("donate-button");
+    var seconds = 15;
+
+    var countdownInterval = setInterval(function() {
+      seconds--;
+      countdownElement.innerHTML = '请仔细阅读材料，' + seconds + '秒后进行捐赠(按键输入)...';
+      if (seconds <= 0) {
+        clearInterval(countdownInterval);
+        countdownElement.innerHTML = '现在可以捐赠了！(按键输入)';
+        buttonElement.style.display = 'inline-block';
+        buttonElement.disabled = false;
+      } }, 1000);
+    buttonElement.disabled = true;  // 完全隐藏 jsPsych 默认空按钮（button_label）
+    const jspsychDefaultBtn = document.querySelector(".jspsych-content-wrapper .jspsych-btn");
+    if (jspsychDefaultBtn && jspsychDefaultBtn !== buttonElement) {
+      jspsychDefaultBtn.style.display = 'none';
+    } },
+  data: { task: 'redonation', varname: 'redonation' }};
+
+
+
+
+
+
+
+
+        
+    
+
+
+    var scale = {
+    type: jsPsychSurveyHtmlForm,
+    preamble: `<p style="font-size: 21px">尊敬的捐赠者，这是与我们合作的慈善机构拜托我们进行的一项调研，请您认真回答。</p>
+    <p>&nbsp&nbsp&nbsp</p>
+    <p>&nbsp&nbsp&nbsp</p>
+    <p>&nbsp&nbsp&nbsp</p>`, 
+    html: `
+        <p style="font-size: 18px">请评估您在捐赠后的感受</p>
+        <p style="font-size: 14px;">很差
+            &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp没什么不同
+            &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp很好<br>
+        <input type="radio" name="Q1" value="1" required><span style="font-size: 18px;">1</span>
+        <input type="radio" name="Q1" value="2"><span style="font-size: 18px;">2</span>
+        <input type="radio" name="Q1" value="3"><span style="font-size: 18px;">3</span>
+        <input type="radio" name="Q1" value="4"><span style="font-size: 18px;">4</span>
+        <input type="radio" name="Q1" value="5"><span style="font-size: 18px;">5</span>
+        <input type="radio" name="Q1" value="6"><span style="font-size: 18px;">6</span>
+        <input type="radio" name="Q1" value="7"><span style="font-size: 18px;">7</span>
+        </p>
+
+        <p style="font-size: 18px">我很有可能在不久的将来再次捐款</p> 
+        <p> <span style="font-size: 14px;">完全不同意</span>
+            <input type="radio" name="Q2" value="1" required>1
+            <input type="radio" name="Q2" value="2" required>2
+            <input type="radio" name="Q2" value="3" required>3
+            <input type="radio" name="Q2" value="4" required>4
+            <input type="radio" name="Q2" value="5" required>5
+            <span style="font-size: 14px;">完全同意</span>
+        </p> `,
+    button_label: '继续', // 设置按钮标签
+    data: {task: 'scale', varname: 'scale'}, };
+
+
+
+
+
+   
+    var timeline = [Sub, Gender, Age, welcome, instructions_block1, block1, instructions_block2, block2, instructions_block3, block3, instructions_block4, block4, instructions_block5, block5, instructions_block6, block6, instructions_block7, block7, welcome2, redonation, scale];
+ jsPsych.run(timeline);
+
+
+</script>
+</html>
