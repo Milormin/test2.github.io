@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>再说</title>
+    <title>欢迎参加实验！</title>
     <script src="https://unpkg.com/jspsych@latest"></script>
     <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@latest"></script>
     <script src="https://unpkg.com/@jspsych/plugin-image-keyboard-response@latest"></script>
@@ -77,7 +77,27 @@
         <p>此实验目的在于考察您对不同类型词语的分类情况，你需要在保证正确的基础上尽快对呈现的词进行归类。</p>
         <p>实验分七部分，每部分的目标词不一样,请<b>注意观看每个部分的指导语</b>。</p>
          <p>如果您已经明白规则，请按下键开始实验。</p>`,
-        choices: ['继续'],};
+        choices: ['继续 (<span id="countdown11"></span>)'],
+    on_start: function() {
+        this.startTime = Date.now();
+    },
+    on_load: function() {
+        let countdown = 15; 
+        let button = document.querySelector("button");
+        button.disabled = true; // 初始时禁用按钮
+        document.getElementById("countdown11").textContent = countdown; 
+
+        const interval = setInterval(() => {
+            countdown -= 1;
+            if (countdown >= 0) {
+                document.getElementById("countdown11").textContent = countdown;
+            }
+            if (countdown === 0) {
+                clearInterval(interval);
+                button.disabled = false; // 倒计时结束后启用按钮
+            }
+        }, 1000);
+    },};
 
     
     const instructions_block1 = {
